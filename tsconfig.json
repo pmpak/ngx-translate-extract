@@ -15,9 +15,11 @@
         "moduleResolution": "node",
         "outDir": "dist",
         "sourceMap": true,
+        "allowJs": true,
     },
     "include": [
         "src/**/*.ts",
+        "node_modules/gettext-parser/**/*.js"
     ],
     "exclude": []
 }

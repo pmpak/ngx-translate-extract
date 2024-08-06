@@ -16,7 +16,7 @@
     "braces": "^3.0.2",
     "colorette": "^2.0.20",
     "flat": "^6.0.1",
-    "gettext-parser": "^4.2.0",
+    "gettext-parser": "^8.0.0",
     "glob": "^10.3.0",
     "json5": "^2.2.3",
     "tsconfig": "^7.0.0",
@@ -25,7 +25,6 @@
   "devDependencies": {
     "@angular/compiler": "^17.0.4",
     "@types/braces": "^3.0.4",
-    "@types/gettext-parser": "^4.0.4",
     "@types/node": "^18",
     "@types/yargs": "^17.0.32",
     "@typescript-eslint/eslint-plugin": "^6.12.0",
