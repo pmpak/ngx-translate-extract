@@ -28,7 +28,7 @@ const y = yargs().option('patterns', {
 	describe: 'Default patterns',
 	type: 'array',
 	default: ['/**/*.html', '/**/*.ts'],
-	// eslint-disable-next-line id-denylist
+	 
 	string: true,
 	hidden: true
 });

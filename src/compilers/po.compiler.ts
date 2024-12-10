@@ -12,8 +12,6 @@ export class PoCompiler implements CompilerInterface {
 	 */
 	public domain: string = '';
 
-	public constructor(options?: any) {}
-
 	public compile(collection: TranslationCollection): string {
 		const data = {
 			charset: 'utf-8',
@@ -36,7 +34,7 @@ export class PoCompiler implements CompilerInterface {
 								}
 							};
 						},
-						{} as any
+						{}
 					)
 			}
 		};
@@ -49,7 +47,7 @@ export class PoCompiler implements CompilerInterface {
 
 		const parsedPo = po.parse(contents, 'utf8');
 
-		if (!parsedPo.translations.hasOwnProperty(this.domain)) {
+		if (!Object.hasOwn(parsedPo.translations,this.domain)) {
 			return collection;
 		}
 
