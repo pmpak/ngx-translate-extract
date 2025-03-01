@@ -108,7 +108,9 @@ export class TranslationCollection {
 
 	public toKeyValueObject(): {[key: string]: string} {
 		const jsonTranslations: {[key: string]: string} = {};
-		Object.entries(this.values).map(([key, value]: [string, TranslationInterface]) => jsonTranslations[key] = value.value);
+		this.keys().forEach((key) => {
+			jsonTranslations[key] = this.values[key].value
+		});
 		return jsonTranslations;
 	}
 

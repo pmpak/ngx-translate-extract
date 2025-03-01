@@ -212,11 +212,7 @@ export class PipeParser implements ParserInterface {
 	}
 
 	protected getTranslatablesFromAsts(asts: AST[]): BindingPipe[] {
-		return this.flatten(asts.map((ast) => this.getTranslatablesFromAst(ast)));
-	}
-
-	protected flatten<T extends AST>(array: T[][]): T[] {
-		return [].concat(...array);
+		return asts.flatMap((ast) => this.getTranslatablesFromAst(ast));
 	}
 
 	protected parseTemplate(template: string, path: string): TmplAstNode[] {
