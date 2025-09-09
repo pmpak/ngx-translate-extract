@@ -59,3 +59,16 @@ export function normalizePaths(patterns: string[], defaultPatterns: string[] = [
 		)
 		.flat();
 }
+
+export async function pathExists(path: string): Promise<boolean> {
+	try {
+		await fs.promises.access(path);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+export async function isDirectory(path: string): Promise<boolean> {
+	return (await fs.promises.stat(path)).isDirectory()
+}
