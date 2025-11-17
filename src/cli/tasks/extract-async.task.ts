@@ -1,22 +1,23 @@
-import { globSync } from 'glob';
-import * as fs from 'node:fs';
+import { cyan, green, bold, dim, red, yellow } from './../../utils/cli-color.js';
+import { glob } from 'glob';
+import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { TranslationCollection, TranslationType } from '../../utils/translation.collection.js';
-import { TaskInterface } from './task.interface.js';
-import { cyan, green, bold, dim, red } from '../../utils/cli-color.js';
 import { ParserInterface } from '../../parsers/parser.interface.js';
 import { PostProcessorInterface } from '../../post-processors/post-processor.interface.js';
 import { CompilerInterface } from '../../compilers/compiler.interface.js';
 import type { CacheInterface } from '../../cache/cache-interface.js';
 import { NullCache } from '../../cache/null-cache.js';
-import { logProgress } from '../../utils/cli-utils.js';
+import { parseFiles } from './parallel-parser.js';
+import { hideCursor, showCursor } from '../../utils/cli-utils.js';
+import { isDirectory, pathExists } from '../../utils/fs-helpers.js';
 
 export interface ExtractTaskOptionsInterface {
 	replace?: boolean;
 }
 
-export class ExtractTask implements TaskInterface {
+export class ExtractAsyncTask {
 	protected options: ExtractTaskOptionsInterface = {
 		replace: false
 	};
@@ -32,63 +33,65 @@ export class ExtractTask implements TaskInterface {
 		this.options = { ...this.options, ...options };
 	}
 
-	public execute(): void {
+	public async execute(): Promise<void> {
 		if (!this.compiler) {
 			throw new Error('No compiler configured');
 		}
 
-		this.printEnabledParsers();
-		this.printEnabledPostProcessors();
-		this.printEnabledCompiler();
-
-		this.out(bold('Extracting:'));
-		const extracted = this.extract();
+		// this.printEnabledParsers();
+		// this.printEnabledPostProcessors();
+		// this.printEnabledCompiler();
+		this.out('ngx-translate-extract');
+		const extracted = await this.extract();
 		this.out(green('\nFound %d strings.\n'), extracted.count());
 
 		this.out(bold('Saving:'));
 
-		this.outputs.forEach((output) => {
-			let dir: string = output;
-			let filename: string = `strings.${this.compiler.extension}`;
-			if (!fs.existsSync(output) || !fs.statSync(output).isDirectory()) {
-				dir = path.dirname(output);
-				filename = path.basename(output);
-			}
+		await Promise.all(this.outputs.map((output) => this.saveToFile(output, extracted)));
 
-			const outputPath: string = path.join(dir, filename);
+		this.cache.persist();
+	}
 
-			let existing: TranslationCollection = new TranslationCollection();
-			if (!this.options.replace && fs.existsSync(outputPath)) {
-				try {
-					existing = this.compiler.parse(fs.readFileSync(outputPath, 'utf-8'));
-				} catch (e) {
-					this.out('%s %s', dim(`- ${outputPath}`), red('[ERROR]'));
-					throw e;
-				}
-			}
 
-			// merge extracted strings with existing
-			const draft = extracted.union(existing);
+	private async saveToFile(output: string, extracted: TranslationCollection) {
+		let dir: string = output;
+		let filename: string = `strings.${this.compiler.extension}`;
+		if (!(await pathExists(output)) || !(await isDirectory(output))) {
+			dir = path.dirname(output);
+			filename = path.basename(output);
+		}
 
-			// Run collection through post processors
-			const final = this.process(draft, extracted, existing);
+		const outputPath: string = path.join(dir, filename);
+		const outputPathExists = await pathExists(outputPath);
 
-			// Save
+		let existing: TranslationCollection = new TranslationCollection();
+		if (!this.options.replace && outputPathExists) {
 			try {
-				let event = 'CREATED';
-				if (fs.existsSync(outputPath)) {
-					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-					this.options.replace ? (event = 'REPLACED') : (event = 'MERGED');
-				}
-				this.save(outputPath, final);
-				this.out('%s %s', dim(`- ${outputPath}`), green(`[${event}]`));
+				existing = this.compiler.parse(await fs.readFile(outputPath, 'utf-8'));
 			} catch (e) {
 				this.out('%s %s', dim(`- ${outputPath}`), red('[ERROR]'));
 				throw e;
 			}
-		});
+		}
 
-		this.cache.persist();
+		// merge extracted strings with existing
+		const draft = extracted.union(existing);
+
+		// Run collection through post processors
+		const final = this.process(draft, extracted, existing);
+
+		// Save
+		try {
+			let event = 'CREATED';
+			if (outputPathExists) {
+				this.options.replace ? (event = 'REPLACED') : (event = 'MERGED');
+			}
+			await this.save(outputPath, final);
+			this.out('%s %s', dim(`- ${outputPath}`), green(`[${event}]`));
+		} catch (e) {
+			this.out('%s %s', dim(`- ${outputPath}`), red('[ERROR]'));
+			throw e;
+		}
 	}
 
 	public setParsers(parsers: ParserInterface[]): this {
@@ -114,37 +117,18 @@ export class ExtractTask implements TaskInterface {
 	/**
 	 * Extract strings from specified input dirs using configured parsers
 	 */
-	protected extract(): TranslationCollection {
-		const collectionTypes: TranslationType[] = [];
-		let skipped = 0;
-		let filesParsed = 0;
-		this.inputs.forEach((pattern) => {
-			const files = this.getFiles(pattern);
-			files.forEach((filePath) => {
-				const contents: string = fs.readFileSync(filePath, 'utf-8');
-				skipped += 1;
-				const cachedCollectionValues = this.cache.get(`${pattern}:${filePath}:${contents}`, () => {
-					skipped -= 1;
-					filesParsed++;
-					logProgress(filesParsed, files.length);
-					return this.parsers
-						.map((parser) => {
-							const extracted = parser.extract(contents, filePath);
-							return extracted instanceof TranslationCollection ? extracted.values : undefined;
-						})
-						.filter((result): result is TranslationType => result && !!Object.keys(result).length);
-				});
+	protected async extract() {
+		console.log(yellow('●'), 'Resolving file paths');
+		const filePaths = (await Promise.all(this.inputs.map((pattern) => this.getFiles(pattern)))).flat();
+		console.log(green('✔'), 'Found', filePaths.length, 'files.');
 
-				collectionTypes.push(...cachedCollectionValues);
-			});
-		});
-
-		if (skipped) {
-			this.out(dim('- %s unchanged files skipped via cache'), skipped);
-		}
+		console.log(bold('Extracting:'));
+		hideCursor();
+		const extractedCollectionTypes = await parseFiles(filePaths);
+		showCursor();
 
 		const values: TranslationType = {};
-		for (const collectionType of collectionTypes) {
+		for (const collectionType of extractedCollectionTypes) {
 			Object.assign(values, collectionType);
 		}
 
@@ -166,22 +150,24 @@ export class ExtractTask implements TaskInterface {
 	 * @param output
 	 * @param collection
 	 */
-	protected save(output: string, collection: TranslationCollection): void {
+	protected async save(output: string, collection: TranslationCollection): Promise<void> {
 		const dir = path.dirname(output);
-		if (!fs.existsSync(dir)) {
-			fs.mkdirSync(dir, { recursive: true });
+
+		if (!(await pathExists(dir))) {
+			await fs.mkdir(dir, { recursive: true });
 		}
-		fs.writeFileSync(output, this.compiler.compile(collection));
+
+		return fs.writeFile(output, this.compiler.compile(collection));
 	}
 
 	/**
 	 * Get all files matching pattern
 	 */
-	protected getFiles(pattern: string): string[] {
+	protected getFiles(pattern: string): Promise<string[]> {
 		// Ensure that the pattern consistently uses forward slashes ("/")
 		// for cross-platform compatibility, as Glob patterns should always use "/"
 		const sanitizedPattern = pattern.split(path.sep).join(path.posix.sep);
-		return globSync(sanitizedPattern).filter((filePath) => fs.statSync(filePath).isFile());
+		return glob(sanitizedPattern, {nodir: true});
 	}
 
 	protected out(...args: unknown[]): void {
@@ -214,3 +200,4 @@ export class ExtractTask implements TaskInterface {
 		this.out();
 	}
 }
+
