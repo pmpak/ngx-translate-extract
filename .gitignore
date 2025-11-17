@@ -11,6 +11,7 @@ src/**/*.js
 tests/**/*.js
 tests/cli/tmp
 dist
+mocks/
 
 # Extracted strings
 strings.json

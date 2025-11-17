@@ -1,6 +1,7 @@
 import yargs from 'yargs';
 
 import { ExtractTask } from './tasks/extract.task.js';
+import { ExtractAsyncTask } from './tasks/extract-async.task.js';
 import { ParserInterface } from '../parsers/parser.interface.js';
 import { PipeParser } from '../parsers/pipe.parser.js';
 import { DirectiveParser } from '../parsers/directive.parser.js';
@@ -21,6 +22,7 @@ import { green, red } from '../utils/cli-color.js';
 import { normalizePaths } from '../utils/fs-helpers.js';
 import { FileCache } from '../cache/file-cache.js';
 import { TranslationType } from '../utils/translation.collection.js';
+import os from 'node:os';
 
 // First parsing pass to be able to access pattern argument for use input/output arguments
 const y = yargs().option('patterns', {
@@ -141,6 +143,11 @@ const cli = await y
 		default: false
 	})
 	.group(['format', 'format-indentation', 'sort', 'sort-sensitivity', 'clean', 'replace', 'strip-prefix', 'trailing-newline', 'po-source-locations'], 'Output')
+	.option('async', {
+		type: 'boolean',
+		default: false,
+	})
+	.group(['format', 'format-indentation', 'sort', 'sort-sensitivity', 'clean', 'replace', 'strip-prefix', 'po-source-locations'], 'Output')
 	.group(['key-as-default-value', 'key-as-initial-default-value', 'null-as-default-value', 'string-as-default-value'], 'Extracted key value (defaults to empty string)')
 	.conflicts('key-as-default-value', 'null-as-default-value')
 	.conflicts('key-as-initial-default-value', 'null-as-default-value')
@@ -155,9 +162,9 @@ const cli = await y
 	.exitProcess(true)
 	.parse(process.argv);
 
-const extractTask = new ExtractTask(cli.input, cli.output, {
-	replace: cli.replace
-});
+const extractTask = cli.async
+	? new ExtractAsyncTask(cli.input, cli.output, {replace: cli.replace})
+	: new ExtractTask(cli.input, cli.output, {replace: cli.replace});
 
 // Parsers
 const parsers: ParserInterface[] = [new PipeParser(), new DirectiveParser(), new ServiceParser()];
@@ -206,8 +213,16 @@ extractTask.setCompiler(compiler);
 
 // Run task
 try {
-	extractTask.execute();
-	console.log(green('\nDone.\n'));
+	const t0 = performance.now();
+	await extractTask.execute();
+	const t1 = performance.now();
+	const seconds = (t1 - t0) / 1000;
+
+	console.log();
+	console.log(cli.async ? green('Async') : green('Sync'));
+	console.log(green(`CPUs: ${os.cpus().length}`));
+	console.log();
+	console.log(green(`\nDone in ${seconds.toFixed(2)} seconds.\n`));
 	process.exit(0);
 } catch (e) {
 	console.log(red(`\nAn error occurred: ${e}\n`));
