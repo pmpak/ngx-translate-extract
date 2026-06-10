@@ -120,6 +120,7 @@
       },
       "rules": {
         "vitest/no-disabled-tests": "error",
+        "vitest/valid-expect": "off",
         "no-unused-vars": "off"
       }
     }
