@@ -1,5 +1,12 @@
 # Changelog
 
+## v10.2.0 (2026-06-10)
+
+- Add support for the new `translate` function and method from `ngx-translate` 18 ([#143](https://github.com/vendurehq/ngx-translate-extract/pull/143))
+- Add a warning that `pot` format does not support `--null-as-default-value` ([#148](https://github.com/vendurehq/ngx-translate-extract/pull/148))
+- Fix pipe parser not detecting keys inside template literals (thanks @P4) ([#141](https://github.com/vendurehq/ngx-translate-extract/pull/141))
+- Fix pipe parser not detecting keys inside `@for` loop definitions ([#136](https://github.com/vendurehq/ngx-translate-extract/issues/136))
+
 ## v10.1.3 (2026-01-26)
 
 - Fix parsing of `@switch` blocks in pipe and directive parser for Angular v21.1 ([#126](https://github.com/vendurehq/ngx-translate-extract/issues/126))
