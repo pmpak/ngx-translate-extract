@@ -119,7 +119,7 @@ describe('PipeParser', () => {
 				expect(keys).to.deep.equal(['Hello', 'World']);
 			});
 
-			it('should extract strings from nested ternary operators ', () => {
+			it('should extract strings from nested ternary operators', () => {
 				const contents = `<h3>{{ (condition ? 'Hello' : anotherCondition ? 'Nested' : 'World' ) | ${translatePipeName} }}</h3>`;
 				const keys = parser.extract(contents, templateFilename).keys();
 				expect(keys).to.deep.equal(['Hello', 'Nested', 'World']);

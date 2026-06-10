@@ -387,7 +387,7 @@ describe('ServiceParser', () => {
 		expect(keys).to.deep.equal(['Hello World']);
 	});
 
-	it('should extract strings when TranslateService is injected using the inject function ', () => {
+	it('should extract strings when TranslateService is injected using the inject function', () => {
 		const contents = `
 			export class MyComponent {
 				private translateService = inject(TranslateService);
