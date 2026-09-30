@@ -55,6 +55,11 @@ function traverseAstNode<T>(
 		children.push(...node.children);
 	}
 
+	// contents of @error from @boundary/@error blocks (The contents of @boundary are picked by the children condition)
+	if ('errorBlocks' in node && Array.isArray(node.errorBlocks)) {
+		children.push(...node.errorBlocks);
+	}
+
 	// contents of @for extra sibling block @empty
 	if (node instanceof TmplAstForLoopBlock && node.empty) {
 		children.push(node.empty);

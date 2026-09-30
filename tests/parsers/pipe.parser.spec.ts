@@ -1,7 +1,7 @@
 import { describe, beforeEach, expect, it } from 'vitest';
 
 import { PipeParser, TRANSLATE_PIPE_NAMES } from '../../src/parsers/pipe.parser.js';
-import { isAngular21OrAbove } from './parser-test-utils.js';
+import { isAngular21OrAbove, isAngular22OrAbove } from './parser-test-utils.js';
 
 describe('PipeParser', () => {
 	const templateFilename: string = 'test.template.html';
@@ -462,6 +462,21 @@ describe('PipeParser', () => {
 
 			const keys = parser.extract(contents, templateFilename).keys();
 			expect(keys).to.deep.equal(['defer', 'defer.error', 'defer.loading', 'defer.placeholder']);
+		});
+
+		it.runIf(isAngular22OrAbove)('should extract keys from elements inside a @boundary/@error block', () => {
+			const contents = `
+				@boundary {
+				  {{ 'boundary.block' | translate }}
+				  <component [message]="'boundary.block.message' | translate" />
+				} @error (let err = $error; let r = $retry) {
+				  {{ 'error.block' | translate }}
+				  <error-component [message]="'error.block.message' | translate" />
+				}
+			`;
+
+			const keys = parser.extract(contents, templateFilename).keys();
+			expect(keys).to.deep.equal(['boundary.block', 'boundary.block.message', 'error.block', 'error.block.message']);
 		});
 
 		it('should extract keys from nested blocks', () => {
