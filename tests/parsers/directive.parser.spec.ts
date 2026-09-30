@@ -1,6 +1,7 @@
 import { describe, beforeEach, expect, it } from 'vitest';
 
 import { DirectiveParser, TRANSLATE_ATTR_NAMES } from '../../src/parsers/directive.parser.js';
+import { isAngular21OrAbove } from './parser-test-utils.js';
 
 describe('DirectiveParser', () => {
 	const templateFilename: string = 'test.template.html';
@@ -225,8 +226,10 @@ describe('DirectiveParser', () => {
 					expect(keys).to.deep.equal(['switch.caseA', 'switch.caseB', 'switch.default']);
 				});
 
-				it('should extract keys from elements inside an @switch/@case block with multiple matching cases', () => {
-					const contents = `
+				it.runIf(isAngular21OrAbove)(
+					'should extract keys from elements inside an @switch/@case block with multiple matching cases',
+					() => {
+						const contents = `
 						@switch (condition) {
 							@case (caseA)
 							@case (caseB) {
@@ -239,9 +242,10 @@ describe('DirectiveParser', () => {
 						}
 					`;
 
-					const keys = parser.extract(contents, templateFilename).keys();
-					expect(keys).to.deep.equal(['switch.caseA', 'switch.caseB', 'switch.default']);
-				});
+						const keys = parser.extract(contents, templateFilename).keys();
+						expect(keys).to.deep.equal(['switch.caseA', 'switch.caseB', 'switch.default']);
+					},
+				);
 
 				it('should extract keys from elements inside an @deferred/@error/@loading/@placeholder block', () => {
 					const contents = `

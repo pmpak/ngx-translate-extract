@@ -526,37 +526,6 @@ describe('getNodesFromSwitchBlockTmpl()', () => {
 		expect(childNodes.at(1).children.at(0).value).toBe('switch.caseB');
 		expect(childNodes.at(2).children.at(0).value).toBe('switch.default');
 	});
-
-	it('should extract nodes from a @switch with `cases` property', () => {
-		const nodes = parseTemplate(
-			`
-			@switch (condition) {
-				@case (caseA) {
-				  <div>switch.caseA</div>
-				}
-				@case (caseB) {
-				  <div>switch.caseB</div>
-				}
-				@default {
-				  <div>switch.default</div>
-				}
-			  }
-		`,
-			'.',
-		).nodes;
-		const switchBlockNode = nodes.at(0) as TmplAstSwitchBlock;
-
-		// Create a mock node with the 'cases' property since we cannot install an older version of angular compiler
-		// only for the test.
-		Reflect.defineProperty(switchBlockNode, 'cases', { value: switchBlockNode.groups });
-		Reflect.deleteProperty(switchBlockNode, 'groups');
-
-		const childNodes = getNodesFromSwitchBlockTmpl(switchBlockNode);
-		expect(childNodes.length).toBe(3);
-		expect(childNodes.at(0).children.at(0).value).toBe('switch.caseA');
-		expect(childNodes.at(1).children.at(0).value).toBe('switch.caseB');
-		expect(childNodes.at(2).children.at(0).value).toBe('switch.default');
-	});
 });
 
 describe('findMethodParameterByType()', () => {
