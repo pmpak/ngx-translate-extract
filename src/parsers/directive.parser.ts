@@ -115,6 +115,11 @@ export class DirectiveParser implements ParserInterface {
 	protected getElementsWithTranslateAttributeFromBlockNodes(blockNode: BlockNode) {
 		let blockChildren = blockNode.children ?? [];
 
+		// contents of @error from @boundary/@error blocks (The contents of @boundary are picked by the children condition)
+		if ('errorBlocks' in blockNode && Array.isArray(blockNode.errorBlocks)) {
+			blockChildren.push(...blockNode.errorBlocks);
+		}
+
 		if (blockNode instanceof TmplAstIfBlock) {
 			blockChildren = blockNode.branches.map((branch) => branch.children).flat();
 		}

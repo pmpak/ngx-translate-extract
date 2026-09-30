@@ -1,7 +1,7 @@
 import { describe, beforeEach, expect, it } from 'vitest';
 
 import { DirectiveParser, TRANSLATE_ATTR_NAMES } from '../../src/parsers/directive.parser.js';
-import { isAngular21OrAbove } from './parser-test-utils.js';
+import { isAngular21OrAbove, isAngular22OrAbove } from './parser-test-utils.js';
 
 describe('DirectiveParser', () => {
 	const templateFilename: string = 'test.template.html';
@@ -262,6 +262,19 @@ describe('DirectiveParser', () => {
 
 					const keys = parser.extract(contents, templateFilename).keys();
 					expect(keys).to.deep.equal(['defer', 'defer.placeholder', 'defer.loading', 'defer.error']);
+				});
+
+				it.runIf(isAngular22OrAbove)('should extract keys from elements inside a @boundary/@error block', () => {
+					const contents = `
+						@boundary {
+							<p ${translateAttrName}>boundary.block</p>
+						} @error (let err = $error; let r = $retry) {
+						  <p ${translateAttrName}>error.block</p>
+						}
+					`;
+
+					const keys = parser.extract(contents, templateFilename).keys();
+					expect(keys).to.deep.equal(['boundary.block', 'error.block']);
 				});
 
 				it('should extract keys from nested blocks', () => {
