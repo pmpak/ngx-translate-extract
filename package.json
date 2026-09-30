@@ -11,6 +11,7 @@
     "watch": "npm run clean && tsc --watch",
     "clean": "tsc --build --clean",
     "test": "vitest",
+    "test:matrix": "for v in 20 21 22; do npm install --no-save --no-package-lock @angular/compiler@$v && vitest run || exit 1; done; npm install",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "lint": "oxlint"

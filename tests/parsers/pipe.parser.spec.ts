@@ -1,6 +1,7 @@
 import { describe, beforeEach, expect, it } from 'vitest';
 
 import { PipeParser, TRANSLATE_PIPE_NAMES } from '../../src/parsers/pipe.parser.js';
+import { isAngular21OrAbove } from './parser-test-utils.js';
 
 describe('PipeParser', () => {
 	const templateFilename: string = 'test.template.html';
@@ -430,7 +431,7 @@ describe('PipeParser', () => {
 			expect(keys).to.deep.equal(['switch.caseA', 'switch.caseB', 'switch.default']);
 		});
 
-		it('should extract keys from elements inside an @switch/@case block with multiple matching cases', () => {
+		it.runIf(isAngular21OrAbove)('should extract keys from elements inside an @switch/@case block with multiple matching cases', () => {
 			const contents = `
 			@switch (condition) {
 				@case (caseA)

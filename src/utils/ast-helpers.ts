@@ -431,7 +431,9 @@ function collectStringsFromExpression(expression: Expression): string[] {
  * versions of the Angular compiler.
  */
 export function getNodesFromSwitchBlockTmpl(node: TmplAstSwitchBlock): TmplAstNode[] {
-	const groups = node.groups ?? ('cases' in node && node.cases);
+	type CompatibleSwitchBlock = { groups?: { children: TmplAstNode[] }[]; cases?: { children: TmplAstNode[] }[] };
+
+	const groups = (node as CompatibleSwitchBlock).groups ?? (node as CompatibleSwitchBlock).cases;
 
 	if (!Array.isArray(groups)) {
 		return [];
