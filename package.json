@@ -19,20 +19,20 @@
     "@phenomnomnominal/tsquery": "^6.2.0",
     "braces": "^3.0.3",
     "flat": "^6.0.1",
-    "gettext-parser": "^9.0.2",
+    "gettext-parser": "^9.1.1",
     "glob": "^13.0.6",
-    "yargs": "^18.0.0"
+    "yargs": "^18.2.0"
   },
   "devDependencies": {
-    "@angular/compiler": "^21.2.16",
+    "@angular/compiler": "^22.2.0",
     "@types/braces": "^3.0.5",
     "@types/gettext-parser": "^9.0.0",
-    "@types/node": "^20.19.42",
+    "@types/node": "^22.20.4",
     "@types/yargs": "^17.0.35",
-    "oxfmt": "^0.54.0",
-    "oxlint": "^1.69.0",
+    "oxfmt": "^0.71.0",
+    "oxlint": "^1.86.0",
     "typescript": "~6.0.3",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.11"
   },
   "peerDependencies": {
     "@angular/compiler": ">=20.0.0",
