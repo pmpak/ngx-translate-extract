@@ -6,7 +6,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "node tools/build.js",
+    "build": "node tools/build.ts",
     "build:dev": "npm run clean && tsc",
     "watch": "npm run clean && tsc --watch",
     "clean": "tsc --build --clean",
