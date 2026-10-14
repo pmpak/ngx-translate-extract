@@ -12,6 +12,7 @@
         "lib": [
             "es2022"
         ],
+        "types": ["node"],
         "module": "nodenext",
         "moduleResolution": "nodenext",
         "outDir": "dist",
