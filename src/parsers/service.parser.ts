@@ -42,7 +42,9 @@ export class ServiceParser implements ParserInterface {
 	private static compilerOptionsCache = new Map<string, CompilerOptions>();
 
 	public canMatch(source: string): boolean {
-		return source.includes(TRANSLATE_SERVICE_TYPE_REFERENCE);
+		// Subclasses can inherit TranslateService without naming it (see `findParentClassProperties`).
+		// Keeping this broad ensures we don't bypass these files, as skipping them silently drops keys.
+		return source.includes(TRANSLATE_SERVICE_TYPE_REFERENCE) || source.includes('extends');
 	}
 
 	public extract(source: string, filePath: string): TranslationCollection {
