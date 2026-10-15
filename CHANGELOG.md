@@ -1,5 +1,9 @@
 # Changelog
 
+## v10.3.1 (2026-10-15)
+
+- Fix service parser dropping keys in subclasses inheriting `TranslateService` ([#173](https://github.com/vendurehq/ngx-translate-extract/issues/173))
+
 ## v10.3.0 (2026-10-07)
 
 - Add support for `@boundary` and `@error` blocks ([#169](https://github.com/vendurehq/ngx-translate-extract/pull/169))
