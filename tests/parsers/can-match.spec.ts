@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import * as os from 'node:os';
+import path from 'node:path';
+
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { DirectiveParser } from '../../src/parsers/directive.parser.js';
 import { FunctionParser } from '../../src/parsers/function.parser.js';
@@ -129,6 +133,65 @@ describe('canMatch', () => {
 				expect(parser.extract(source, filePath).keys()).to.deep.equal([]);
 				expect(parser.canMatch?.(source)).to.equal(false);
 			});
+		});
+	});
+
+	describe('ServiceParser with an inherited TranslateService', () => {
+		let tempDir: string;
+
+		beforeEach(() => {
+			tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ngxte-can-match-'));
+		});
+
+		afterEach(() => {
+			fs.rmSync(tempDir, { recursive: true });
+		});
+
+		it('should accept a subclass whose base class (in another file) holds the TranslateService', () => {
+			fs.writeFileSync(
+				path.join(tempDir, 'base.ts'),
+				`
+					import { inject } from '@angular/core';
+					import { TranslateService } from '@ngx-translate/core';
+					export abstract class Base {
+						protected readonly translate = inject(TranslateService);
+						protected readonly typed: TranslateService;
+					}
+				`,
+			);
+			const source = `
+				import { Component } from '@angular/core';
+				import { Base } from './base';
+
+				@Component({ selector: 'app-child', template: '' })
+				export class ChildComponent extends Base {
+					readonly title = this.typed.instant('inherited.service.key');
+				}
+			`;
+			const parser = new ServiceParser();
+			const filePath = path.join(tempDir, 'child.component.ts');
+
+			expect(source).not.to.contain('TranslateService');
+			expect(parser.extract(source, filePath).keys()).to.deep.equal(['inherited.service.key']);
+			expect(parser.canMatch(source), 'canMatch rejected a subclass of a TranslateService holder').to.equal(true);
+		});
+
+		it('should accept a multi-level subclass', () => {
+			fs.writeFileSync(path.join(tempDir, 'base.ts'), `export abstract class Base { protected translate: TranslateService; }`);
+			fs.writeFileSync(
+				path.join(tempDir, 'middle.ts'),
+				`import { Base } from './base';\nexport abstract class Middle extends Base {}`,
+			);
+			const source = `
+				import { Middle } from './middle';
+				export class Leaf extends Middle {
+					run() { this.translate.get('multi.level.key'); }
+				}
+			`;
+			const parser = new ServiceParser();
+
+			expect(parser.extract(source, path.join(tempDir, 'leaf.ts')).keys()).to.deep.equal(['multi.level.key']);
+			expect(parser.canMatch(source)).to.equal(true);
 		});
 	});
 });
